@@ -15,6 +15,11 @@ DB_PATH = os.path.join(BASE_DIR, "al_toque.db")
 
 SECRET_KEY = os.environ.get("AL_TOQUE_SECRET_KEY", "cambiar-esta-clave-en-produccion")
 
+# Render define automaticamente la variable de entorno RENDER en todos los
+# servicios que corren ahi -- la usamos para saber si estamos en produccion
+# (hosting real, siempre con HTTPS) o corriendo local con python app.py.
+EN_PRODUCCION = bool(os.environ.get("RENDER"))
+
 # --- Horario de operación (según lo definido para el piloto) ---
 # Entre semana: 08:00 a 01:00 (cruza medianoche)
 # Sábados y domingos: 24 horas
