@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta — Al Toque{% endblock %}
+{% block content %}
+<h1>Crear cuenta</h1>
+<form method="post" id="form-registro">
+  <label for="rol">Quiero registrarme como</label>
+  <select id="rol" name="rol" onchange="mostrarCampos()">
+    <option value="cliente">Cliente</option>
+    <option value="comercio">Comercio</option>
+    <option value="repartidor">Repartidor</option>
+  </select>
+
+  <label for="nombre">Nombre</label>
+  <input type="text" id="nombre" name="nombre" required>
+
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" required>
+
+  <label for="telefono">Teléfono</label>
+  <input type="tel" id="telefono" name="telefono">
+
+  <label for="password">Contraseña</label>
+  <input type="password" id="password" name="password" required minlength="6">
+
+  <div id="campos-comercio" style="display:none;">
+    <label for="comercio_nombre">Nombre del comercio</label>
+    <input type="text" id="comercio_nombre" name="comercio_nombre">
+    <label for="comercio_categoria">Categoría</label>
+    <input type="text" id="comercio_categoria" name="comercio_categoria" placeholder="Almacén, kiosco, comida, etc.">
+    <label for="comercio_direccion">Dirección</label>
+    <input type="text" id="comercio_direccion" name="comercio_direccion">
+  </div>
+
+  <div id="campos-repartidor" style="display:none;">
+    <label for="vehiculo">Vehículo</label>
+    <input type="text" id="vehiculo" name="vehiculo" placeholder="Moto, bici, auto...">
+  </div>
+
+  <button class="btn" type="submit">Crear cuenta</button>
+</form>
+<p style="margin-top:18px;">¿Ya tenés cuenta? <a href="{{ url_for('login') }}">Ingresá</a></p>
+
+<script>
+function mostrarCampos() {
+  const rol = document.getElementById('rol').value;
+  document.getElementById('campos-comercio').style.display = rol === 'comercio' ? 'block' : 'none';
+  document.getElementById('campos-repartidor').style.display = rol === 'repartidor' ? 'block' : 'none';
+}
+mostrarCampos();
+</script>
+{% endblock %}

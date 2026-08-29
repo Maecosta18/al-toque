@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Mis ganancias — Al Toque{% endblock %}
+{% block content %}
+<h1>Mis ganancias</h1>
+<div class="card">
+  <h3>Acumulado</h3>
+  <p style="font-size:32px; color:var(--lime); font-weight:700;">${{ '%.2f'|format(total) }}</p>
+  <p>{{ entregas|length }} entrega{{ 's' if entregas|length != 1 else '' }} completada{{ 's' if entregas|length != 1 else '' }}</p>
+</div>
+
+<h2>Detalle</h2>
+{% if entregas %}
+<div class="card-list">
+  {% for e in entregas %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between;">
+      <span>Pedido #{{ e['id'] }} · {{ e['comercio_nombre'] }}</span>
+      <strong style="color:var(--lime);">+${{ '%.2f'|format(e['costo_envio']) }}</strong>
+    </div>
+    <p style="font-size:12px;">{{ e['actualizado_en'][:16].replace('T', ' ') }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>Todavía no completaste entregas.</p></div>
+{% endif %}
+{% endblock %}

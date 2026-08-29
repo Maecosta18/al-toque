@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Panel del repartidor — Al Toque{% endblock %}
+{% block content %}
+<h1>Entregas</h1>
+
+<div class="pill-nav">
+  <a class="active" href="{{ url_for('repartidor_panel') }}">Entregas</a>
+  <a href="{{ url_for('repartidor_ganancias') }}">Mis ganancias</a>
+</div>
+
+<div class="card">
+  <h3>Ubicación en vivo</h3>
+  <p id="estado-compartir">{{ 'Estás compartiendo tu ubicación.' if compartiendo else 'No estás compartiendo tu ubicación todavía.' }}</p>
+  <button class="btn lime" id="btn-compartir" type="button" onclick="compartirUbicacion()">Compartir mi ubicación</button>
+  <p style="font-size:12px; margin-top:8px;">Activalo cuando salgas a repartir para que el cliente te vea en el mapa mientras el pedido está en camino.</p>
+</div>
+
+<h2>Tus entregas en curso</h2>
+{% if mis_entregas %}
+<div class="card-list">
+  {% for p in mis_entregas %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>Pedido #{{ p['id'] }}</h3>
+      <span class="badge {{ p['estado'] }}">{{ p['estado'].replace('_', ' ') }}</span>
+    </div>
+    <p>Retirar en: {{ p['comercio_nombre'] }} — {{ p['comercio_direccion'] or '' }}</p>
+    <p>Entregar en: {{ p['direccion_entrega'] }}</p>
+    <div class="total-row grand"><span>Ganás</span><span>${{ '%.2f'|format(p['costo_envio']) }}</span></div>
+    <form method="post" action="{{ url_for('repartidor_entregar', pedido_id=p['id']) }}">
+      <button class="btn lime" type="submit">Marcar entregado</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>No tenés entregas en curso.</p></div>
+{% endif %}
+
+<h2 style="margin-top:28px;">Disponibles para tomar</h2>
+{% if disponibles %}
+<div class="card-list">
+  {% for p in disponibles %}
+  <div class="card">
+    <h3>Pedido #{{ p['id'] }}</h3>
+    <p>Retirar en: {{ p['comercio_nombre'] }} — {{ p['comercio_direccion'] or '' }}</p>
+    <p>Entregar en: {{ p['direccion_entrega'] }}</p>
+    <div class="total-row grand"><span>Ganás</span><span>${{ '%.2f'|format(p['costo_envio']) }}</span></div>
+    <form method="post" action="{{ url_for('repartidor_aceptar', pedido_id=p['id']) }}">
+      <button class="btn" type="submit">Aceptar entrega</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>No hay entregas disponibles por ahora.</p></div>
+{% endif %}
+
+<script>
+let watchId = null;
+
+function compartirUbicacion() {
+  if (!("geolocation" in navigator)) {
+    alert("Tu navegador no soporta geolocalización.");
+    return;
+  }
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    document.getElementById('estado-compartir').textContent = "Dejaste de compartir tu ubicación.";
+    return;
+  }
+  document.getElementById('estado-compartir').textContent = "Activando ubicación...";
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      document.getElementById('estado-compartir').textContent =
+        "Compartiendo ubicación (última actualización: " + new Date().toLocaleTimeString() + ")";
+      fetch("{{ url_for('repartidor_ubicacion') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      }).catch(() => {});
+    },
+    (err) => {
+      document.getElementById('estado-compartir').textContent = "No se pudo acceder a tu ubicación: " + err.message;
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+  );
+}
+</script>
+{% endblock %}

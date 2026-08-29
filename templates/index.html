@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Al Toque — Pedí al toque{% endblock %}
+{% block content %}
+<div class="hero">
+  <img class="logo-big" src="{{ url_for('static', filename='img/logo.svg') }}" alt="Al Toque">
+  <h1>AL TOQUE</h1>
+  <p>Marketplace y delivery local de Río Segundo y Pilar. Comprá en tus comercios de siempre y recibilo rápido.</p>
+  <a class="btn" href="{{ url_for('registro') }}">Crear cuenta</a>
+  <a class="btn secondary" href="{{ url_for('login') }}">Ya tengo cuenta</a>
+</div>
+<div class="card">
+  <h3>Zona de cobertura</h3>
+  <p>{{ zona_cobertura }}</p>
+</div>
+{% endblock %}

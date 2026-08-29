@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Admin — Al Toque{% endblock %}
+{% block content %}
+<h1>Panel de administración</h1>
+
+{% if not cfg['servicio_activo'] %}
+<div class="notice" style="border-color: rgba(255,107,107,0.5); color: var(--danger);">
+  Al Toque está fuera de servicio ahora mismo. <a href="{{ url_for('admin_configuracion') }}">Reactivalo acá</a>.
+</div>
+{% endif %}
+
+<div class="row" style="flex-wrap:wrap; gap:12px;">
+  <a class="card" style="flex:1 1 45%; min-width:140px; color:inherit; display:block;" href="{{ url_for('admin_comercios') }}">
+    <h3 style="margin-bottom:4px;">🏪 Comercios</h3>
+    <p style="margin:0;">Editar, pausar o suspender</p>
+  </a>
+  <a class="card" style="flex:1 1 45%; min-width:140px; color:inherit; display:block;" href="{{ url_for('admin_clientes') }}">
+    <h3 style="margin-bottom:4px;">👤 Clientes</h3>
+    <p style="margin:0;">Editar o suspender cuentas</p>
+  </a>
+  <a class="card" style="flex:1 1 45%; min-width:140px; color:inherit; display:block;" href="{{ url_for('admin_repartidores') }}">
+    <h3 style="margin-bottom:4px;">🛵 Repartidores</h3>
+    <p style="margin:0;">Editar, ver ubicación</p>
+  </a>
+  <a class="card" style="flex:1 1 45%; min-width:140px; color:inherit; display:block;" href="{{ url_for('admin_configuracion') }}">
+    <h3 style="margin-bottom:4px;">⚙️ Configuración</h3>
+    <p style="margin:0;">Comisión, horario, emergencia</p>
+  </a>
+</div>
+
+<div class="row" style="margin-top:20px;">
+  <div class="card">
+    <h3>Pedidos</h3>
+    <p style="font-size:24px; color:var(--text);">{{ resumen['pedidos_totales'] }}</p>
+  </div>
+  <div class="card">
+    <h3>Comisión acumulada</h3>
+    <p style="font-size:24px; color:var(--text);">${{ '%.2f'|format(resumen['comision_total']) }}</p>
+  </div>
+</div>
+<div class="row">
+  <div class="card">
+    <h3>Comercios activos</h3>
+    <p style="font-size:24px; color:var(--text);">{{ comercios_activos }}</p>
+  </div>
+  <div class="card">
+    <h3>Repartidores</h3>
+    <p style="font-size:24px; color:var(--text);">{{ repartidores_activos }}</p>
+  </div>
+</div>
+
+<h2 style="margin-top:24px;">Últimos pedidos</h2>
+<div class="card-list">
+  {% for p in ultimos_pedidos %}
+  <a class="card" style="color:inherit; display:block;" href="{{ url_for('admin_pedido_detalle', pedido_id=p['id']) }}">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span>#{{ p['id'] }} · {{ p['comercio_nombre'] }}</span>
+      <span class="badge {{ p['estado'] }}">{{ p['estado'].replace('_', ' ') }}</span>
+    </div>
+    <div class="total-row"><span>Total</span><span>${{ '%.2f'|format(p['total']) }}</span></div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

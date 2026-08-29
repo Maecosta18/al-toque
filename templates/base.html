@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Al Toque{% endblock %}</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <meta name="theme-color" content="#101018">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <a href="{{ url_for('index') }}" style="display:flex; align-items:center; gap:10px; color:inherit;">
+      <img class="logo" src="{{ url_for('static', filename='img/logo.svg') }}" alt="Al Toque">
+      <span class="brand">AL TOQUE</span>
+    </a>
+    <span class="spacer"></span>
+    {% if current_user %}
+      <a class="icon-link" href="{{ url_for('logout') }}">Salir</a>
+    {% else %}
+      <a class="icon-link" href="{{ url_for('login') }}">Ingresar</a>
+    {% endif %}
+  </header>
+
+  <main>
+    {% if not dentro_de_horario %}
+      <div class="notice">Al Toque está fuera de horario de atención en este momento.</div>
+    {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensaje in messages %}
+        <div class="flash {{ categoria }}">{{ mensaje }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if current_user and current_user['rol'] == 'cliente' %}
+  <nav class="tabbar">
+    <a href="{{ url_for('comercios') }}" class="{{ 'active' if request.endpoint in ['comercios', 'comercio_detalle'] else '' }}">Comercios</a>
+    <a href="{{ url_for('carrito') }}" class="{{ 'active' if request.endpoint == 'carrito' else '' }}">Carrito</a>
+    <a href="{{ url_for('mis_pedidos') }}" class="{{ 'active' if request.endpoint == 'mis_pedidos' else '' }}">Mis pedidos</a>
+  </nav>
+  {% endif %}
+</div>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+}
+</script>
+</body>
+</html>

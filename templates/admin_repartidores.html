@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Repartidores — Admin{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<h1>Repartidores</h1>
+<div class="pill-nav">
+  <a href="{{ url_for('admin_panel') }}">Resumen</a>
+  <a href="{{ url_for('admin_comercios') }}">Comercios</a>
+  <a href="{{ url_for('admin_clientes') }}">Clientes</a>
+  <a class="active" href="{{ url_for('admin_repartidores') }}">Repartidores</a>
+  <a href="{{ url_for('admin_configuracion') }}">Configuración</a>
+</div>
+
+{% set con_ubicacion = repartidores|selectattr('ultima_lat')|list %}
+{% if con_ubicacion %}
+<div class="card">
+  <h3>Ubicación en vivo</h3>
+  <div id="mapa" style="width:100%; height:280px; border-radius:10px;"></div>
+</div>
+{% endif %}
+
+<div class="card-list">
+  {% for r in repartidores %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>{{ r['nombre'] }}</h3>
+      <span class="badge {{ 'entregado' if r['activo'] else 'cancelado' }}">{{ 'activo' if r['activo'] else 'suspendido' }}</span>
+    </div>
+    {% if r['ultima_lat'] %}
+    <p style="font-size:12px;">Última ubicación: {{ r['ubicacion_en'][:16].replace('T', ' ') }}</p>
+    {% else %}
+    <p style="font-size:12px;">Todavía no compartió su ubicación.</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('admin_repartidor_editar', repartidor_id=r['id']) }}">
+      <label>Nombre</label>
+      <input type="text" name="nombre" value="{{ r['nombre'] }}" required>
+      <label>Email</label>
+      <input type="email" name="email" value="{{ r['email'] }}" required>
+      <label>Teléfono</label>
+      <input type="text" name="telefono" value="{{ r['telefono'] or '' }}">
+      <label>Vehículo</label>
+      <input type="text" name="vehiculo" value="{{ r['vehiculo'] or '' }}">
+      <button class="btn small" type="submit">Guardar</button>
+    </form>
+    <form method="post" action="{{ url_for('admin_usuario_toggle', usuario_id=r['usuario_id']) }}" style="margin-top:10px;">
+      <button class="btn small danger" type="submit">{{ 'Suspender cuenta' if r['activo'] else 'Reactivar cuenta' }}</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>Todavía no hay repartidores registrados.</p></div>
+  {% endfor %}
+</div>
+
+{% if con_ubicacion %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const puntos = [
+    {% for r in con_ubicacion %}
+    { nombre: {{ r['nombre']|tojson }}, lat: {{ r['ultima_lat'] }}, lng: {{ r['ultima_lng'] }} },
+    {% endfor %}
+  ];
+  const mapa = L.map('mapa').setView([puntos[0].lat, puntos[0].lng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19,
+  }).addTo(mapa);
+  puntos.forEach((p) => L.marker([p.lat, p.lng]).addTo(mapa).bindPopup(p.nombre));
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Clientes — Admin{% endblock %}
+{% block content %}
+<h1>Clientes</h1>
+<div class="pill-nav">
+  <a href="{{ url_for('admin_panel') }}">Resumen</a>
+  <a href="{{ url_for('admin_comercios') }}">Comercios</a>
+  <a class="active" href="{{ url_for('admin_clientes') }}">Clientes</a>
+  <a href="{{ url_for('admin_repartidores') }}">Repartidores</a>
+  <a href="{{ url_for('admin_configuracion') }}">Configuración</a>
+</div>
+
+<div class="card-list">
+  {% for cl in clientes %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>{{ cl['nombre'] }}</h3>
+      <span class="badge {{ 'entregado' if cl['activo'] else 'cancelado' }}">{{ 'activo' if cl['activo'] else 'suspendido' }}</span>
+    </div>
+    <form method="post" action="{{ url_for('admin_usuario_editar', usuario_id=cl['id']) }}">
+      <label>Nombre</label>
+      <input type="text" name="nombre" value="{{ cl['nombre'] }}" required>
+      <label>Email</label>
+      <input type="email" name="email" value="{{ cl['email'] }}" required>
+      <label>Teléfono</label>
+      <input type="text" name="telefono" value="{{ cl['telefono'] or '' }}">
+      <button class="btn small" type="submit">Guardar</button>
+    </form>
+    <form method="post" action="{{ url_for('admin_usuario_toggle', usuario_id=cl['id']) }}" style="margin-top:10px;">
+      <button class="btn small danger" type="submit">{{ 'Suspender cuenta' if cl['activo'] else 'Reactivar cuenta' }}</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>Todavía no hay clientes registrados.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

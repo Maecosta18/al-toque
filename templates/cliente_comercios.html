@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Comercios — Al Toque{% endblock %}
+{% block content %}
+<h1>Comercios</h1>
+{% if comercios %}
+<div class="card-list">
+  {% for c in comercios %}
+  <a class="card" href="{{ url_for('comercio_detalle', comercio_id=c['id']) }}" style="color:inherit; display:block;">
+    <h3>{{ c['nombre'] }}</h3>
+    <p>{{ c['categoria'] or 'Comercio local' }} · {{ c['direccion'] or '' }}</p>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>Todavía no hay comercios cargados en tu zona.</p>
+</div>
+{% endif %}
+{% endblock %}

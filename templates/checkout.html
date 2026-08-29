@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Confirmar pedido — Al Toque{% endblock %}
+{% block content %}
+<h1>Confirmar pedido</h1>
+<div class="notice">
+  El pago con Mercado Pago (con split automático entre comercio, repartidor y plataforma) todavía no está integrado — por ahora, al confirmar, el pedido se crea directamente como pagado para poder probar el flujo completo.
+</div>
+<form method="post">
+  <label for="direccion">Dirección de entrega</label>
+  <textarea id="direccion" name="direccion" rows="3" required></textarea>
+  <button class="btn" type="submit">Confirmar pedido</button>
+</form>
+{% endblock %}

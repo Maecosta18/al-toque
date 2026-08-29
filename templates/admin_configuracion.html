@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Configuración — Al Toque{% endblock %}
+{% block content %}
+<h1>Configuración de la plataforma</h1>
+
+<div class="pill-nav">
+  <a href="{{ url_for('admin_panel') }}">Resumen</a>
+  <a href="{{ url_for('admin_comercios') }}">Comercios</a>
+  <a href="{{ url_for('admin_clientes') }}">Clientes</a>
+  <a href="{{ url_for('admin_repartidores') }}">Repartidores</a>
+  <a class="active" href="{{ url_for('admin_configuracion') }}">Configuración</a>
+</div>
+
+<div class="card" style="border-color: {{ 'rgba(255,107,107,0.5)' if not cfg['servicio_activo'] else 'var(--border)' }};">
+  <h3>Estado del servicio</h3>
+  {% if cfg['servicio_activo'] %}
+    <p>Al Toque está <strong style="color:#7fd68a;">activo</strong> y funcionando con normalidad.</p>
+    <form method="post" action="{{ url_for('admin_servicio_toggle') }}" onsubmit="return confirm('¿Seguro que querés SUSPENDER Al Toque para todos los usuarios? Clientes, comercios y repartidores no van a poder usar la app.');">
+      <button class="btn danger" type="submit" style="border-color: var(--danger);">Bajar la app de servicio (emergencia)</button>
+    </form>
+  {% else %}
+    <p style="color: var(--danger);">Al Toque está <strong>fuera de servicio</strong> ahora mismo. Nadie puede usarla salvo vos como admin.</p>
+    <form method="post" action="{{ url_for('admin_servicio_toggle') }}">
+      <button class="btn lime" type="submit">Reactivar Al Toque</button>
+    </form>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Suspender con confirmación</h3>
+  <p>Para bajar el servicio te va a pedir confirmar escribiendo "SUSPENDER". Si preferís hacerlo desde acá:</p>
+  <form method="post" action="{{ url_for('admin_servicio_toggle') }}">
+    <label for="confirmacion">Escribí SUSPENDER para confirmar</label>
+    <input type="text" id="confirmacion" name="confirmacion" placeholder="SUSPENDER">
+    <button class="btn danger" type="submit" style="border-color: var(--danger);">Suspender ahora</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Parámetros del negocio</h3>
+  <form method="post">
+    <label for="comision_pct">Comisión de la plataforma (%)</label>
+    <input type="number" id="comision_pct" name="comision_pct" step="0.1" min="0" max="100"
+           value="{{ '%.1f'|format(cfg['comision_pct'] * 100) }}" required>
+
+    <label for="costo_envio_default">Costo de envío ($)</label>
+    <input type="number" id="costo_envio_default" name="costo_envio_default" step="1" min="0"
+           value="{{ cfg['costo_envio_default'] }}" required>
+
+    <label for="recargo_cancelacion_pct">Recargo por cancelación del cliente (%)</label>
+    <input type="number" id="recargo_cancelacion_pct" name="recargo_cancelacion_pct" step="0.1" min="0" max="100"
+           value="{{ '%.1f'|format(cfg['recargo_cancelacion_pct'] * 100) }}" required>
+    <p style="font-size:12px;">Se aplica siempre que el cliente cancela un pedido (no cuando cancela el comercio).</p>
+
+    <label for="zona_cobertura">Zona de cobertura</label>
+    <textarea id="zona_cobertura" name="zona_cobertura" rows="2" required>{{ cfg['zona_cobertura'] }}</textarea>
+
+    <div class="row">
+      <div>
+        <label for="horario_semana_inicio">Horario de apertura (entre semana)</label>
+        <input type="time" id="horario_semana_inicio" name="horario_semana_inicio" value="{{ cfg['horario_semana_inicio'] }}" required>
+      </div>
+      <div>
+        <label for="horario_semana_fin">Horario de cierre (entre semana)</label>
+        <input type="time" id="horario_semana_fin" name="horario_semana_fin" value="{{ cfg['horario_semana_fin'] }}" required>
+      </div>
+    </div>
+    <p style="font-size:12px;">Sábados y domingos la plataforma opera 24 hs (fijo, no editable desde acá).</p>
+
+    <label for="mensaje_mantenimiento">Mensaje cuando está fuera de servicio</label>
+    <textarea id="mensaje_mantenimiento" name="mensaje_mantenimiento" rows="2" required>{{ cfg['mensaje_mantenimiento'] }}</textarea>
+
+    <button class="btn" type="submit">Guardar cambios</button>
+  </form>
+</div>
+{% endblock %}

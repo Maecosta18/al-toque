@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Comercios — Admin{% endblock %}
+{% block content %}
+<h1>Comercios</h1>
+<div class="pill-nav">
+  <a href="{{ url_for('admin_panel') }}">Resumen</a>
+  <a class="active" href="{{ url_for('admin_comercios') }}">Comercios</a>
+  <a href="{{ url_for('admin_clientes') }}">Clientes</a>
+  <a href="{{ url_for('admin_repartidores') }}">Repartidores</a>
+  <a href="{{ url_for('admin_configuracion') }}">Configuración</a>
+</div>
+
+<div class="card-list">
+  {% for c in comercios %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>{{ c['nombre'] }}</h3>
+      <span class="badge {{ 'entregado' if c['activo'] else 'cancelado' }}">{{ 'activo' if c['activo'] else 'pausado' }}</span>
+    </div>
+
+    <h3 style="margin-top:16px; font-size:13px; color:var(--text-muted);">Datos del comercio</h3>
+    <form method="post" action="{{ url_for('admin_comercio_editar', comercio_id=c['id']) }}">
+      <label>Nombre</label>
+      <input type="text" name="nombre" value="{{ c['nombre'] }}" required>
+      <label>Categoría</label>
+      <input type="text" name="categoria" value="{{ c['categoria'] or '' }}">
+      <label>Dirección</label>
+      <input type="text" name="direccion" value="{{ c['direccion'] or '' }}">
+      <div class="row">
+        <div>
+          <label>Latitud</label>
+          <input type="number" step="any" name="lat" value="{{ c['lat'] or '' }}">
+        </div>
+        <div>
+          <label>Longitud</label>
+          <input type="number" step="any" name="lng" value="{{ c['lng'] or '' }}">
+        </div>
+      </div>
+      <button class="btn small" type="submit">Guardar comercio</button>
+    </form>
+
+    <h3 style="margin-top:16px; font-size:13px; color:var(--text-muted);">Cuenta del dueño</h3>
+    <form method="post" action="{{ url_for('admin_usuario_editar', usuario_id=c['owner_id']) }}">
+      <label>Nombre</label>
+      <input type="text" name="nombre" value="{{ c['owner_nombre'] }}" required>
+      <label>Email</label>
+      <input type="email" name="email" value="{{ c['owner_email'] }}" required>
+      <label>Teléfono</label>
+      <input type="text" name="telefono" value="{{ c['owner_telefono'] or '' }}">
+      <button class="btn small" type="submit">Guardar cuenta</button>
+    </form>
+    <p style="font-size:12px; margin-top:8px;">{{ 'Cuenta suspendida' if not c['owner_activo'] else '' }}</p>
+
+    <div class="row" style="margin-top:12px;">
+      <form method="post" action="{{ url_for('admin_comercio_toggle', comercio_id=c['id']) }}">
+        <button class="btn small secondary" type="submit">{{ 'Pausar comercio' if c['activo'] else 'Reactivar comercio' }}</button>
+      </form>
+      <form method="post" action="{{ url_for('admin_usuario_toggle', usuario_id=c['owner_id']) }}">
+        <button class="btn small danger" type="submit">{{ 'Suspender cuenta' if c['owner_activo'] else 'Reactivar cuenta' }}</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state"><p>Todavía no hay comercios registrados.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

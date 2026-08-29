@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Mis pedidos — Al Toque{% endblock %}
+{% block content %}
+<h1>Mis pedidos</h1>
+{% if pedidos %}
+<div class="card-list">
+  {% for p in pedidos %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>{{ p['comercio_nombre'] }}</h3>
+      <span class="badge {{ p['estado'] }}">{{ p['estado'].replace('_', ' ') }}</span>
+    </div>
+    <p>Pedido #{{ p['id'] }} · {{ p['creado_en'][:16].replace('T', ' ') }}</p>
+    <strong>${{ '%.2f'|format(p['total']) }}</strong>
+    {% if p['estado'] == 'cancelado' %}
+    <p style="color:#ff6b6b;">Cancelado. Reintegro: ${{ '%.2f'|format(p['reintegro_cliente']) }}</p>
+    {% elif p['estado'] == 'en_camino' %}
+    <a class="btn small lime" href="{{ url_for('pedido_seguimiento', pedido_id=p['id']) }}">Ver en el mapa</a>
+    {% elif p['estado'] in ['pendiente_pago', 'pagado', 'en_preparacion', 'listo_para_retirar'] %}
+    <div class="row" style="margin-top:12px;">
+      <form method="post" action="{{ url_for('pedido_cancelar_cliente', pedido_id=p['id']) }}"
+            onsubmit="return confirm('Se te va a cobrar un recargo del {{ (recargo_cancelacion_pct * 100)|round(1) }}% (aprox. ${{ '%.2f'|format(p['total'] * recargo_cancelacion_pct) }}) por cancelar. ¿Confirmás?');">
+        <button class="btn small danger" type="submit">Cancelar pedido</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>Todavía no hiciste ningún pedido.</p>
+  <a class="btn secondary" href="{{ url_for('comercios') }}">Ver comercios</a>
+</div>
+{% endif %}
+{% endblock %}

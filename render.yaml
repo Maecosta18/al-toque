@@ -1,0 +1,27 @@
+# Blueprint de Render (https://render.com) para desplegar Al Toque
+# con un solo clic en "New +" → "Blueprint", eligiendo este repositorio.
+#
+# Con esto Render configura automáticamente el servicio con el plan
+# gratis, el comando de build y el comando de arranque correctos, y
+# genera un SECRET_KEY seguro (no hace falta escribirlo a mano).
+#
+# Importante (plan gratis): el disco NO es persistente. Cada vez que el
+# servicio se reinicia (por inactividad de 15 min, o al redesplegar) se
+# pierde la base de datos y se recarga sola con los datos de ejemplo
+# (comercio@demo.com / repartidor@demo.com / cliente@demo.com /
+# admin@demo.com, todos con contraseña demo1234). Sirve perfecto para
+# probar el link público; para guardar datos reales de forma permanente
+# hay que pasar a un plan pago con disco persistente.
+
+services:
+  - type: web
+    name: al-toque
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: AL_TOQUE_SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.9

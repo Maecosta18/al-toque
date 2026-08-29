@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Seguimiento — Al Toque{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<h1>Pedido #{{ pedido['id'] }}</h1>
+<p>{{ pedido['comercio_nombre'] }} · <span class="badge {{ pedido['estado'] }}">{{ pedido['estado'].replace('_', ' ') }}</span></p>
+
+<div class="card">
+  <div id="mapa" style="width:100%; height:340px; border-radius:10px;"></div>
+  <p id="estado-ubicacion" style="margin-top:10px; font-size:13px;">Buscando al repartidor...</p>
+  <p id="distancia-repartidor" style="font-size:13px;"></p>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const comercioLat = {{ pedido['comercio_lat'] or 'null' }};
+  const comercioLng = {{ pedido['comercio_lng'] or 'null' }};
+
+  const vistaInicial = comercioLat !== null ? [comercioLat, comercioLng] : [-31.65, -63.9];
+  const mapa = L.map('mapa').setView(vistaInicial, 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19,
+  }).addTo(mapa);
+
+  const iconoComercio = L.divIcon({ className: '', html: '<div style="background:#f2622a;width:16px;height:16px;border-radius:50%;border:2px solid white;"></div>' });
+  const iconoRepartidor = L.divIcon({ className: '', html: '<div style="background:#cdfa5a;width:16px;height:16px;border-radius:50%;border:2px solid white;"></div>' });
+  const iconoCliente = L.divIcon({ className: '', html: '<div style="background:#5aa6fa;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>' });
+
+  if (comercioLat !== null) {
+    L.marker([comercioLat, comercioLng], { icon: iconoComercio }).addTo(mapa).bindPopup("Comercio: {{ pedido['comercio_nombre'] }}");
+  }
+
+  let marcadorRepartidor = null;
+  let marcadorCliente = null;
+  let miPosicion = null;
+  let centrado = false;
+
+  function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      miPosicion = [pos.coords.latitude, pos.coords.longitude];
+      marcadorCliente = L.marker(miPosicion, { icon: iconoCliente }).addTo(mapa).bindPopup("Tu ubicación");
+    });
+  }
+
+  async function actualizar() {
+    try {
+      const res = await fetch("{{ url_for('pedido_ubicacion', pedido_id=pedido['id']) }}");
+      const datos = await res.json();
+      const estadoEl = document.getElementById('estado-ubicacion');
+      const distEl = document.getElementById('distancia-repartidor');
+      if (datos.lat === null || datos.lat === undefined) {
+        estadoEl.textContent = "El repartidor todavía no compartió su ubicación.";
+        return;
+      }
+      const pos = [datos.lat, datos.lng];
+      if (!marcadorRepartidor) {
+        marcadorRepartidor = L.marker(pos, { icon: iconoRepartidor }).addTo(mapa).bindPopup("Repartidor");
+      } else {
+        marcadorRepartidor.setLatLng(pos);
+      }
+      if (!centrado) {
+        const grupo = comercioLat !== null ? [pos, [comercioLat, comercioLng]] : [pos];
+        mapa.fitBounds(grupo, { padding: [40, 40] });
+        centrado = true;
+      }
+      estadoEl.textContent = "Última actualización: " + (datos.actualizado_en || '').replace('T', ' ');
+      if (miPosicion) {
+        const km = haversineKm(miPosicion[0], miPosicion[1], datos.lat, datos.lng);
+        distEl.textContent = "El repartidor está a " + km.toFixed(1) + " km tuyo (línea recta).";
+      }
+    } catch (e) {
+      // silencioso: reintenta en el próximo ciclo
+    }
+  }
+  actualizar();
+  setInterval(actualizar, 8000);
+</script>
+{% endblock %}

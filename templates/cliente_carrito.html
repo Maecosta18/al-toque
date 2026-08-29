@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Carrito — Al Toque{% endblock %}
+{% block content %}
+<h1>Tu carrito</h1>
+{% if items %}
+<div class="card">
+  <p style="margin-top:0;">{{ comercio['nombre'] }}</p>
+  {% for it in items %}
+  <div class="item-row">
+    <span>{{ it.cantidad }}x {{ it.producto['nombre'] }}</span>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span>${{ '%.2f'|format(it.importe) }}</span>
+      <form method="post" action="{{ url_for('carrito_quitar', producto_id=it.producto['id']) }}">
+        <button class="btn small danger" type="submit">Quitar</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="total-row"><span>Subtotal</span><span>${{ '%.2f'|format(subtotal) }}</span></div>
+  <div class="total-row"><span>Envío</span><span>${{ '%.2f'|format(costo_envio) }}</span></div>
+  <div class="total-row grand"><span>Total</span><span>${{ '%.2f'|format(total) }}</span></div>
+</div>
+<a class="btn" href="{{ url_for('checkout') }}">Confirmar pedido</a>
+{% else %}
+<div class="empty-state">
+  <p>Todavía no agregaste nada.</p>
+  <a class="btn secondary" href="{{ url_for('comercios') }}">Ver comercios</a>
+</div>
+{% endif %}
+{% endblock %}

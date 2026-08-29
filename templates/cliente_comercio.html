@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ comercio['nombre'] }} — Al Toque{% endblock %}
+{% block content %}
+<h1>{{ comercio['nombre'] }}</h1>
+<p>{{ comercio['categoria'] or '' }} · {{ comercio['direccion'] or '' }}</p>
+{% if comercio['lat'] %}
+<p id="distancia-comercio" style="font-size:13px;"></p>
+{% endif %}
+
+{% if productos %}
+<div class="card-list">
+  {% for p in productos %}
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div>
+        <h3>{{ p['nombre'] }}</h3>
+        <p>{{ p['descripcion'] or '' }}</p>
+        <strong>${{ '%.2f'|format(p['precio']) }}</strong>
+      </div>
+      <form method="post" action="{{ url_for('carrito_agregar', producto_id=p['id']) }}">
+        <button class="btn small lime" type="submit">Agregar</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><p>Este comercio todavía no cargó productos.</p></div>
+{% endif %}
+
+{% if comercio['lat'] %}
+<script>
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const R = 6371;
+    const toRad = (d) => d * Math.PI / 180;
+    const lat1 = pos.coords.latitude, lng1 = pos.coords.longitude;
+    const lat2 = {{ comercio['lat'] }}, lng2 = {{ comercio['lng'] }};
+    const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+    const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    document.getElementById('distancia-comercio').textContent =
+      "A " + km.toFixed(1) + " km en línea recta de tu ubicación (no es la ruta exacta por calle).";
+  }, () => {
+    document.getElementById('distancia-comercio').textContent = "";
+  });
+}
+</script>
+{% endif %}
+{% endblock %}
