@@ -180,8 +180,7 @@ GitHub — Render redespliega solo.
    datos reales sin perderlos en cada reinicio, pasar al plan pago de
    Render con disco persistente (~USD 7/mes + USD 0.25/GB) o a una base
    de datos administrada.
-6. **Seguridad**: antes de un lanzamiento real, cambiar `SECRET_KEY` en
-   `config.py` por una clave generada y no versionarla en el código.
+6. **Seguridad**: hecho para el piloto -- en Render la `SECRET_KEY` ya es una clave generada automaticamente (variable de entorno `AL_TOQUE_SECRET_KEY`, no la de `config.py`), las cookies de sesion son `HttpOnly` + `Secure` + `SameSite=Lax`, hay una verificacion basica de origen contra CSRF en todos los formularios, y headers `Strict-Transport-Security` / `X-Frame-Options` / `X-Content-Type-Options`. Para un lanzamiento mas grande, lo siguiente seria sumar limite de intentos de login (rate limiting) y backups automaticos si se pasa a un plan con disco persistente.
 
 ## Estructura del proyecto
 
