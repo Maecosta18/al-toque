@@ -11,8 +11,34 @@ app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
 app.teardown_appcontext(db.close_db)
 
+# --- Seguridad de las cookies de sesión ---
+# HttpOnly evita que JavaScript en la página pueda leer la cookie de sesión
+# (protege contra robo de sesión vía XSS). SameSite=Lax evita que la cookie
+# se mande en pedidos iniciados desde otros sitios (protección básica
+# contra CSRF). Secure exige HTTPS para la cookie — en producción (Render)
+# siempre es HTTPS, pero lo dejamos condicionado para no romper el uso
+# local con `python app.py` en http://localhost.
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=config.EN_PRODUCCION,
+)
+
 RUTAS_PERMITIDAS_EN_MANTENIMIENTO = {"/login", "/logout", "/"}
 PREFIJOS_PERMITIDOS_EN_MANTENIMIENTO = ("/admin", "/static", "/manifest.json", "/sw.js")
+
+# Un repartidor solo puede aceptar un pedido si está compartiendo su
+# ubicación en vivo (así el cliente lo puede ver desde el primer momento).
+# "Compartiendo en vivo" = mandó una actualización de posición hace menos
+# de esta cantidad de segundos.
+UBICACION_VIGENCIA_SEGUNDOS = 120
+
+
+def repartidor_compartiendo_ubicacion(repartidor_row):
+    if not repartidor_row["ultima_lat"] or not repartidor_row["ultima_lng"]:
+        return False
+    segundos = db.segundos_desde(repartidor_row["ubicacion_en"])
+    return segundos is not None and segundos <= UBICACION_VIGENCIA_SEGUNDOS
 
 # Se ejecuta siempre al importar el módulo (con `python app.py` en local o
 # con gunicorn en un hosting) — crea las tablas si no existen y, si la
@@ -65,6 +91,27 @@ def mi_repartidor():
 
 
 @app.before_request
+def revisar_csrf_basico():
+    """Protección básica contra CSRF: en pedidos que modifican datos
+    (POST/PUT/DELETE) verificamos que el Origin (o, si no viene, el
+    Referer) sea el mismo sitio. Un formulario malicioso en otra página
+    no puede completar este chequeo porque el navegador no manda un
+    Origin nuestro."""
+    if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
+        return None
+    origen = request.headers.get("Origin") or request.headers.get("Referer")
+    if not origen:
+        # Algunos navegadores/clientes viejos no mandan ninguno de los
+        # dos; no bloqueamos para no romper la app, pero es el caso más
+        # raro (la inmensa mayoría de navegadores modernos sí lo manda).
+        return None
+    origen_host = origen.split("://", 1)[-1].split("/", 1)[0]
+    if origen_host != request.host:
+        return "Solicitud rechazada (verificación de origen).", 403
+    return None
+
+
+@app.before_request
 def revisar_estado_global():
     if session.get("rol") == "admin":
         return None
@@ -75,6 +122,15 @@ def revisar_estado_global():
     if not cfg["servicio_activo"]:
         return render_template("mantenimiento.html", mensaje=cfg["mensaje_mantenimiento"]), 503
     return None
+
+
+@app.after_request
+def agregar_headers_seguridad(response):
+    if config.EN_PRODUCCION:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
 
 
 @app.context_processor
@@ -553,7 +609,8 @@ def repartidor_panel():
     ).fetchall()
     return render_template(
         "repartidor_panel.html", disponibles=disponibles, mis_entregas=mis_entregas,
-        compartiendo=bool(repartidor_actual["ultima_lat"]),
+        compartiendo=repartidor_compartiendo_ubicacion(repartidor_actual),
+        vigencia_segundos=UBICACION_VIGENCIA_SEGUNDOS,
     )
 
 
@@ -592,6 +649,13 @@ def repartidor_ubicacion():
 def repartidor_aceptar(pedido_id):
     conn = db.get_db()
     repartidor_actual = mi_repartidor()
+    if not repartidor_compartiendo_ubicacion(repartidor_actual):
+        flash(
+            "Tenés que activar \"Compartir mi ubicación\" antes de aceptar un "
+            "pedido — así el cliente te puede ver en vivo apenas salís.",
+            "error",
+        )
+        return redirect(url_for("repartidor_panel"))
     conn.execute(
         "UPDATE pedidos SET repartidor_id = ?, estado = 'en_camino', actualizado_en = ? "
         "WHERE id = ? AND repartidor_id IS NULL",
