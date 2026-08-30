@@ -152,6 +152,18 @@ def now_iso():
     return datetime.now().isoformat(timespec="seconds")
 
 
+def segundos_desde(iso_str):
+    """Segundos transcurridos desde un timestamp guardado con now_iso().
+    Devuelve None si iso_str es None/vacio (nunca se registro nada)."""
+    if not iso_str:
+        return None
+    try:
+        momento = datetime.fromisoformat(iso_str)
+    except ValueError:
+        return None
+    return (datetime.now() - momento).total_seconds()
+
+
 def haversine_km(lat1, lng1, lat2, lng2):
     """Distancia en línea recta entre dos puntos, en km."""
     import math
