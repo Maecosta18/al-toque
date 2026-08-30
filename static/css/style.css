@@ -111,6 +111,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--orange); }
 .btn.lime { background: var(--lime); color: #14210a; }
 .btn.danger { background: transparent; color: var(--danger); border: 1px solid rgba(255,107,107,0.4); }
 .btn.small { width: auto; padding: 8px 14px; font-size: 13px; margin-top: 0; }
+.btn:disabled { background: var(--bg-card-2); color: var(--text-muted); cursor: not-allowed; opacity: 0.6; }
 
 .row { display: flex; gap: 10px; }
 .row > * { flex: 1; }
